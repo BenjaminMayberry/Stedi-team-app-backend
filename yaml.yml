@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stedi-backend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stedi-backend
+  template:
+    metadata:
+      name: stedi-backend
+      labels:
+        app: stedi-backend
+    spec:
+      containers:
+      - name: stedi-backend
+        image: artificialfloat/stedi-backend
+        volumeMounts:
+        - name: ssl
+          mountPath: "/usr/src/app/SSL"
+        command: ["mvn clean package"]
+        args: ["run","start"]
+        env:
+          - name: REDIS_PASS
+            valueFrom:
+              secretKeyRef:
+                name: redis-secrets-benjamin
+                key: REDIS_PASS
+        resources:
+          requests:
+            cpu: 0.125
+            memory: 500Mi
+          limits:
+            cpu: 0.125
+            memory: 600Mi
+        imagePullPolicy: Always
+      # volumes:
+      # - name: ssl
+      #   secret: 
+      #     secretName: ssl.secret.haein
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stedi-backend-loadbalancer
+spec:
+  selector:
+    app: stedi-backend
+  type: LoadBalancer
+  ports:
+  - port: 443
+    targetPort: 443

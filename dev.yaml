@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: artificialfloat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: artificialfloat
+  template:
+    metadata:
+      labels:
+        app: artificialfloat
+    spec:
+      containers:
+        - name: artificialfloat
+          image: gcr.io/gurlpower/artificialfloat-stedi-backend
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-stedi-prod
+                  key: REDIS_PASS
+            - name: REDIS_HOST
+              value: "redis-stedi-prod"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_DB
+              value: "0"
+            - name: KAFKA_BROKER
+              value: "localhost:9092"
+          ports: 
+            - containerPort: 443
+          resources:
+            requests:
+              cpu: 0.25
+              memory: 250Mi
+            limits:
+              cpu: 0.5
+              memory: 500Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4567
+            initialDelaySeconds: 3
+            periodSeconds: 3
